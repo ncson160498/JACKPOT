@@ -5,7 +5,7 @@ npm run dev\
 http://localhost:5173/
 ## Run solidity
 cd jackpot\
-npm i\
+npm i
 ## Deploy thirdweb
 npx thirdweb@latest release
 # lottery-smart-contract
@@ -16,5 +16,5 @@ npx thirdweb@latest release
 
 ❗❗Deploy the CONTRACT DIRECTLY here: https://thirdweb.com/0x741179Acd84FeDEb7315a8ce4149f5cEF914185c/Lottery
 
-#Get MATIC TOKEN
+Get MATIC TOKEN
  https://mumbaifaucet.com/
