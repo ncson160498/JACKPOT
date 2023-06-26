@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import CountdownTimer from './components/CountdownTimer';
 import toast from 'react-hot-toast';
-
+import Marquee from "react-fast-marquee";
+import AdminControls from './components/AdminControls';
 
 function App() {
   const address = useAddress();
@@ -17,13 +18,18 @@ function App() {
   const { data: remainingTickets } = useContractRead(contract, "RemainingTickets");
   const { data: currentWinningReward } = useContractRead(contract, "CurrentWinningReward");
   const { data: ticketPrice } = useContractRead(contract, "ticketPrice");
-  const { data: ticketCommission } = useContractRead(contract, "ticketCommission")
+  const { data: ticketCommission } = useContractRead(contract, "ticketCommission");
   const { data: expiration } = useContractRead(contract, "expiration");
   const { mutateAsync: BuyTickets } = useContractWrite(contract, "BuyTickets");
   const { data: tickets } = useContractRead(contract, "getTickets");
+  const { data: winnings } = useContractRead(contract, "getWinningsForAddress", [address]);
+  const { mutateAsync: WithdrawWinnings} = useContractWrite(contract, "WithdrawWinnings");
+  const { data: lastWinner } = useContractRead(contract, "lastWinner");
+  const { data: lastWinnerAmount } = useContractRead(contract, "lastWinnerAmount");
+  const { data: lotteryOperator } = useContractRead(contract, "lotteryOperator");
   useEffect(()=>{
     if(!tickets) return;
-    const totalTickets:string[]=tickets;
+    const totalTickets:string[]=tickets; 
     const noOfUserTickets=totalTickets.reduce(
       (total,ticketAddress)=>(ticketAddress === address?total+1:total),
       0
@@ -34,15 +40,9 @@ function App() {
     if(!ticketPrice) return;
     const notify = toast.loading('Buying your tickets...');
     try {
-     const data=await BuyTickets([
-      {
-        value: ethers.utils.parseEther(
-          (
-            Number(ethers.utils.formatEther(ticketPrice)) * quantity
-          ).toString()
-        ),
-      },
-     ]);
+    const totalPrice = Number(ethers.utils.formatEther(ticketPrice.toString()))*quantity;
+    const parsedTotalPrice = ethers.utils.parseEther(totalPrice.toString());
+    const data = await BuyTickets([parsedTotalPrice]);
      toast.success('Tickets purchased successfully!',{
       id:notify,
      });
@@ -51,12 +51,47 @@ function App() {
       console.error("contract call failure",err)
     }
   };
+  const onWithdraWinnings=async ()=>{
+    const notify=toast.loading("Withdrawing winnings...");
+    try{
+      const data=await WithdrawWinnings([{}]);
+      toast.success('Winnings withdrawn successfully!',{
+        id:notify,
+      });
+    }catch(err){
+      toast.error('Something went wrong!',{
+        id:notify,
+      });
+
+    }
+  }
   if(!address) return (<Login/>);
   // if(isLoading) return <Loading/>
   return (
     <div className='bg-[#091818] min-h-screen flex flex-col'>
       <div className='flex-1'>
       <Header/>
+      <Marquee className='bg-[#0A1F1C] p-5 mb-5'gradient={false} speed={100}>
+        <div className='flex space-x-2 mx-10'>
+          <h4 className='text-white font-bold'>Last Winner: {lastWinner?.toString()}</h4>
+          <h4 className='text-white font-bold'>Previous winnings: {lastWinnerAmount&& ethers.utils.formatEther(lastWinnerAmount?.toString())} MATIC</h4>
+        </div>
+      </Marquee>
+      {lotteryOperator === address && (
+        <div className='flex justify-center'>
+          <AdminControls/>
+        </div>
+      )}
+      {winnings > 0 && (
+        <div className='max-w-md md:max-w-2xl lg:max-w-4xl mx-auto mt-5'>
+          <button onClick={onWithdraWinnings} className='p-5 bg-gradient-to-b from-orange-500 to-emerald-600 animate-pulse text-center rounded-xl w-full'>
+            <p className='font-bold'>Winner Winner Chicken Dinner!!!</p>
+            <p>Total Winnings:{ethers.utils.formatEther(winnings.toString())}{' '} MATIC</p>
+            <br />
+            <p className='font-semibold'>Click here to withdraw</p>
+          </button>
+        </div>
+      )}
         {/* the next draw box */}
         <div className='space-y-5 md:space-y-0 m-5 md:flex md:flex-row items-start justify-center md:space-x-5'>
           <div className='stats-container'>
