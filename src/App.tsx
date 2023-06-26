@@ -4,12 +4,12 @@ import Header from './components/Header';
 import Login from './components/Login';
 import Loading from './components/Loading';
 import { useEffect, useState } from 'react';
-import { ethers } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import CountdownTimer from './components/CountdownTimer';
 import toast from 'react-hot-toast';
 import Marquee from "react-fast-marquee";
 import AdminControls from './components/AdminControls';
-
+import currency from '../constants';
 function App() {
   const address = useAddress();
   const [quantity,setQuantity]=useState<number>(1);
@@ -40,9 +40,12 @@ function App() {
     if(!ticketPrice) return;
     const notify = toast.loading('Buying your tickets...');
     try {
-    const totalPrice = Number(ethers.utils.formatEther(ticketPrice.toString()))*quantity;
-    const parsedTotalPrice = ethers.utils.parseEther(totalPrice.toString());
-    const data = await BuyTickets([parsedTotalPrice]);
+      const totalPrice = Number(ethers.utils.formatEther(ticketPrice.toString())) * quantity;
+      console.log("Total Price:", totalPrice);
+      const parsedTotalPrice = ethers.utils.parseEther(totalPrice.toString());
+      console.log("Parsed Total Price:", parsedTotalPrice.toString());
+      const data = await BuyTickets([parsedTotalPrice]);
+
      toast.success('Tickets purchased successfully!',{
       id:notify,
      });
@@ -74,7 +77,7 @@ function App() {
       <Marquee className='bg-[#0A1F1C] p-5 mb-5'gradient={false} speed={100}>
         <div className='flex space-x-2 mx-10'>
           <h4 className='text-white font-bold'>Last Winner: {lastWinner?.toString()}</h4>
-          <h4 className='text-white font-bold'>Previous winnings: {lastWinnerAmount&& ethers.utils.formatEther(lastWinnerAmount?.toString())} MATIC</h4>
+          <h4 className='text-white font-bold'>Previous winnings: {lastWinnerAmount&& ethers.utils.formatEther(lastWinnerAmount?.toString())} {currency}</h4>
         </div>
       </Marquee>
       {lotteryOperator === address && (
@@ -86,7 +89,7 @@ function App() {
         <div className='max-w-md md:max-w-2xl lg:max-w-4xl mx-auto mt-5'>
           <button onClick={onWithdraWinnings} className='p-5 bg-gradient-to-b from-orange-500 to-emerald-600 animate-pulse text-center rounded-xl w-full'>
             <p className='font-bold'>Winner Winner Chicken Dinner!!!</p>
-            <p>Total Winnings:{ethers.utils.formatEther(winnings.toString())}{' '} MATIC</p>
+            <p>Total Winnings:{ethers.utils.formatEther(winnings.toString())}{' '} {currency}</p>
             <br />
             <p className='font-semibold'>Click here to withdraw</p>
           </button>
@@ -99,7 +102,7 @@ function App() {
             <div className='flex justify-between p-2 space-x-2'>
             <div className='stats'>
                 <h2 className='text-sm'>Total Pool</h2>
-                <p className='text-xl'>{currentWinningReward && ethers.utils.formatEther(currentWinningReward.toString())}{' '}MATIC</p>
+                <p className='text-xl'>{currentWinningReward && ethers.utils.formatEther(currentWinningReward.toString())}{' '}{currency}</p>
               </div>
               <div className='stats'>
                   <h2 className='text-sm'>Tickets Remaining</h2>
@@ -118,7 +121,7 @@ function App() {
                   <h2 className=''>
                     Price per ticker 
                   </h2>
-                  <p>{ticketPrice && ethers.utils.formatEther(ticketPrice?.toString())} MATIC</p>
+                  <p>{ticketPrice && ethers.utils.formatEther(ticketPrice?.toString())} {currency}</p>
                 </div>
                 <div className='flex text-white items-center space-x-2 bg-[#091818] border-[#004337] border p-4'>
                   <p>TICKETS</p>
@@ -137,7 +140,7 @@ function App() {
                   </div>
                   <div className='flex items-center justify-between text-emerald-300 text-xs italic'>
                     <p>Service fees</p>
-                    <p>{ticketCommission && ethers.utils.formatEther(ticketCommission?.toString())} MATIC</p>
+                    <p>{ticketCommission && ethers.utils.formatEther(ticketCommission?.toString())} {currency}</p>
                   </div>
                   <div className='flex items-center justify-between text-emerald-300 text-xs italic'>
                     <p>+ NetWork Fees</p>
@@ -152,7 +155,7 @@ function App() {
                  text-white shadow-xl disabled:from-gray-500
                   disabled:text-gray-100 disabled:to-gray-600 
                   disabled:cursor-not-allowed'>Buy {quantity} tickets for {ticketPrice &&
-                  Number(ethers.utils.formatEther(ticketPrice.toString()))*quantity} {' '} MATIC
+                  Number(ethers.utils.formatEther(ticketPrice.toString()))*quantity} {' '} {currency}
                 </button>
               </div>
               {userTickets > 0 && (

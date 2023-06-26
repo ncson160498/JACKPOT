@@ -9,7 +9,7 @@ function Header() {
     <header className='grid grid-cols-2 md:grid-cols-5 justify-between'>
       <div className='flex items-center space-x-2'>
         <div className='flex items-center space-x-2'>
-          <img className="rounded-full h-20 w-20" src="jackpot.png" alt="" />
+          <img className="rounded-full h-20 w-20" src="jackpotlogo.jpg" alt="" />
         </div>
         <div>
           <p className='text-xs text-emerald-500 truncate'>User:{address?.substring(0,5)}...{address?.substring(address.length, address.length-5)}</p>
@@ -28,7 +28,6 @@ function Header() {
            <NavButton title='Logout'/>
       </span>      
       </div>
-     
     </header>
   );
 }
