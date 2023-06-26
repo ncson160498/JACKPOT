@@ -3,7 +3,7 @@ import './App.css'
 import Header from './components/Header';
 import Login from './components/Login';
 import Loading from './components/Loading';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import CountdownTimer from './components/CountdownTimer';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 function App() {
   const address = useAddress();
   const [quantity,setQuantity]=useState<number>(1);
+  const [userTickets,setUserTickets]=useState(0);
   const { contract } = useContract("0xfa13538f42E8D371E67E31Cf99532B687b68709C");
   const { data: remainingTickets } = useContractRead(contract, "RemainingTickets");
   const { data: currentWinningReward } = useContractRead(contract, "CurrentWinningReward");
@@ -19,6 +20,16 @@ function App() {
   const { data: ticketCommission } = useContractRead(contract, "ticketCommission")
   const { data: expiration } = useContractRead(contract, "expiration");
   const { mutateAsync: BuyTickets } = useContractWrite(contract, "BuyTickets");
+  const { data: tickets } = useContractRead(contract, "getTickets");
+  useEffect(()=>{
+    if(!tickets) return;
+    const totalTickets:string[]=tickets;
+    const noOfUserTickets=totalTickets.reduce(
+      (total,ticketAddress)=>(ticketAddress === address?total+1:total),
+      0
+      );
+    setUserTickets(noOfUserTickets);
+  },[tickets,address])
   const handleClick = async () =>{
     if(!ticketPrice) return;
     const notify = toast.loading('Buying your tickets...');
@@ -29,7 +40,7 @@ function App() {
           (
             Number(ethers.utils.formatEther(ticketPrice)) * quantity
           ).toString()
-        )
+        ),
       },
      ]);
      toast.success('Tickets purchased successfully!',{
@@ -101,13 +112,30 @@ function App() {
                 <button
                 disabled={expiration?.toString()<Date.now().toString() || remainingTickets?.toNumber()===0}
                 onClick={handleClick}
-                 className='mt-5 w-full bg-gradient-to-br from-orange-500 to-emerald-600 px-10 py-5 rounded-md text-white shadow-xl disabled:from-gray-500 disabled:text-gray-100 disabled:to-gray-600 disabled:cursor-not-allowed'>Buy tickets</button>
+                 className='mt-5 w-full bg-gradient-to-br from-orange-500 
+                 to-emerald-600 px-10 py-5 rounded-md font-semibold
+                 text-white shadow-xl disabled:from-gray-500
+                  disabled:text-gray-100 disabled:to-gray-600 
+                  disabled:cursor-not-allowed'>Buy {quantity} tickets for {ticketPrice &&
+                  Number(ethers.utils.formatEther(ticketPrice.toString()))*quantity} {' '} MATIC
+                </button>
               </div>
+              {userTickets > 0 && (
+                <div className='stats'>
+                  <p className='text-lg mb-2'>You have {userTickets} Tickets in this draw</p>
+                  <div className='flex max-w-sm flex-wrap gap-x-2 gap-y-2'>
+                    {Array(userTickets).fill('').map((_,index) => (
+                      <p className='text-emerald-300 h-20 w-12
+                      bg-emerald-500/30 rounded-lg flex flex-shrink-0
+                      items-center justify-center text-xs italic' key={index}>{index+1}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
         {/* the price per ticker box */}
-        <div></div>
       </div>
     </div>
   );
